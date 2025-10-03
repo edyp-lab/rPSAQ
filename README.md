@@ -43,24 +43,20 @@ The computed ratios of each fragment can be graphically represented:
 ``` r
 # plot the previously deconvoluted data
 plot_psaq_ratios(deconvoluted_data)
-#> Warning: Removed 4 rows containing missing values or values outside the scale range
-#> (`geom_point()`).
-#> Removed 4 rows containing missing values or values outside the scale range
-#> (`geom_point()`).
 ```
 
-<img src="man/figures/README-figure-1.png" width="100%" />
+<img src="man/figures/README-figure-1.png" width="75%" style="display: block; margin: auto;" />
 
-To write the result, use the openxlsx package
+To write the result, use the openxlsx package:
 
 ``` r
 openxlsx::write.xlsx(deconvoluted_data, "outputfile.xlsx")
 ```
 
-The deconvolution can be performed from a list of Excel files stored in
-a single folder. For example to perform deconvolution on Excel files
-starting by “7843” and ending with “.xlsx” from the the “inst/extdata”
-folder:
+The deconvolution can be batch performed from a list of Excel files
+stored in a folder. For example to perform deconvolution on all Excel
+files starting by “7843” and ending with “.xlsx” located in the
+“inst/extdata” folder:
 
 ``` r
 batch_psaq_analysis("inst/extdata", "^7843.*\\.xlsx$")
