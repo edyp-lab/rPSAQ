@@ -3,7 +3,7 @@
 #' Deconvolute Peptide Abundances from MS2 Data
 #'
 #' Deconvolute peptide abundances by separating endogenous and PSAQ (Protein Standard Absolute Quantification)
-#' contributions from MS2 isotopic data. This function processes experimental data to calculate corrected
+#' contributions from MS2 isotopic data. This function processes experimental data to calculate
 #' intensities and areas for endogenous and PSAQ peptides.
 #'
 #' @param ms2_data A data frame containing MS2 fragments first and second isotopes abundances.
@@ -46,7 +46,7 @@
 #'
 #' @examples
 #' # Deconvolute peptide abundances from MS2 data
-#' data = deconvoluate_peptides_abundances(sample_10ng_r4)
+#' data = deconvolute_peptides_abundances(sample_10ng_r4)
 #'
 #' @importFrom openxlsx read.xlsx
 #' @importFrom dplyr full_join left_join select arrange mutate filter
@@ -57,7 +57,7 @@
 #'
 #' @export
 #'
-deconvoluate_peptides_abundances = function(ms2_data) {
+deconvolute_peptides_abundances = function(ms2_data) {
 
   required_columns = c("seq", "mz", "frag_mz", "rt", "m/z", "frag_isotope", "frag_label")
 
@@ -138,10 +138,10 @@ deconvoluate_peptides_abundances = function(ms2_data) {
 #' @details
 #' This function performs the following steps for each Excel file matching the pattern:
 #' 1. Identifies all Excel files in the current working directory that match the specified pattern.
-#' 2. For each file, reads the file and call \code{\link{deconvoluate_peptides_abundances}} to process the data.
+#' 2. For each file, reads the file and call \code{\link{deconvolute_peptides_abundances}} to process the data.
 #' 3. Writes the results to a new Excel file with the prefix "calculated_ratios_" followed by the original filename.
 #'
-#' The function uses \code{\link{deconvoluate_peptides_abundances}} to deconvolute peptide abundances
+#' The function uses \code{\link{deconvolute_peptides_abundances}} to deconvolute peptide abundances
 #' by separating endogenous and PSAQ contributions from MS2 isotopic data.
 #'
 #' @examples
@@ -154,7 +154,7 @@ deconvoluate_peptides_abundances = function(ms2_data) {
 #' @importFrom openxlsx write.xlsx
 #'
 #' @seealso
-#' \code{\link{deconvoluate_peptides_abundances}} for deconvoluting peptide abundances from a single Excel file.
+#' \code{\link{deconvolute_peptides_abundances}} for deconvoluting peptide abundances from a single Excel file.
 #' \code{\link{list.files}} for listing files matching a pattern.
 #'
 #' @export
@@ -166,7 +166,7 @@ batch_psaq_analysis = function(dir, xlsx_files_pattern) {
     print(paste0("Processing file : ", filename, " ..."))
     inputfile = file.path(dir, filename)
     ms2_data = openxlsx::read.xlsx(inputfile, sheet = 1, colNames = TRUE)
-    psaq_deconvolution = deconvoluate_peptides_abundances(ms2_data)
+    psaq_deconvolution = deconvolute_peptides_abundances(ms2_data)
     outputfile = file.path(dir, paste0("calculated_ratios_", filename))
     openxlsx::write.xlsx(psaq_deconvolution, outputfile)
   }
@@ -204,15 +204,15 @@ batch_psaq_analysis = function(dir, xlsx_files_pattern) {
 #' }
 #'
 #' @examples
-#' # Deconvoluate then plot PSAQ example data
-#' psaq_data = deconvoluate_peptides_abundances(sample_10ng_r4)
+#' # Deconvolute then plot PSAQ example data
+#' psaq_data = deconvolute_peptides_abundances(sample_10ng_r4)
 #' plot = plot_psaq_ratios(psaq_data)
 #'
 #'
 #' @importFrom ggplot2 ggplot geom_point ylim aes labs
 #'
 #' @seealso
-#' \code{\link{deconvoluate_peptides_abundances}} for generating the input data.
+#' \code{\link{deconvolute_peptides_abundances}} for generating the input data.
 #' \code{\link[ggplot2]{ggplot}} for creating the base plot.
 #' \code{\link[ggplot2]{geom_point}} for adding points to the plot.
 #'

@@ -39,14 +39,14 @@ This function creates a scatter plot where:
 }
 }
 \examples{
-# Deconvoluate then plot PSAQ example data
-psaq_data = deconvoluate_peptides_abundances(sample_10ng_r4)
+# Deconvolute then plot PSAQ example data
+psaq_data = deconvolute_peptides_abundances(sample_10ng_r4)
 plot = plot_psaq_ratios(psaq_data)
 
 
 }
 \seealso{
-\code{\link{deconvoluate_peptides_abundances}} for generating the input data.
+\code{\link{deconvolute_peptides_abundances}} for generating the input data.
 \code{\link[ggplot2]{ggplot}} for creating the base plot.
 \code{\link[ggplot2]{geom_point}} for adding points to the plot.
 }

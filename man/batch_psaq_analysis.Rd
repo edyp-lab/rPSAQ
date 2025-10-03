@@ -27,10 +27,10 @@ deconvolutes peptide abundances, and saves the results to new Excel files.
 \details{
 This function performs the following steps for each Excel file matching the pattern:
 1. Identifies all Excel files in the current working directory that match the specified pattern.
-2. For each file, reads the file and call \code{\link{deconvoluate_peptides_abundances}} to process the data.
+2. For each file, reads the file and call \code{\link{deconvolute_peptides_abundances}} to process the data.
 3. Writes the results to a new Excel file with the prefix "calculated_ratios_" followed by the original filename.
 
-The function uses \code{\link{deconvoluate_peptides_abundances}} to deconvolute peptide abundances
+The function uses \code{\link{deconvolute_peptides_abundances}} to deconvolute peptide abundances
 by separating endogenous and PSAQ contributions from MS2 isotopic data.
 }
 \examples{
@@ -42,6 +42,6 @@ batch_psaq_analysis("inst/extdata", "^sample.*\\\\.xlsx$")
 
 }
 \seealso{
-\code{\link{deconvoluate_peptides_abundances}} for deconvoluting peptide abundances from a single Excel file.
+\code{\link{deconvolute_peptides_abundances}} for deconvoluting peptide abundances from a single Excel file.
 \code{\link{list.files}} for listing files matching a pattern.
 }

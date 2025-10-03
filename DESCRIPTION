@@ -15,12 +15,12 @@ Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.3
 Imports: 
-    dplyr,
-    ggplot2,
-    openxlsx,
-    OrgMassSpecR,
-    sinib,
+    dplyr (>= 1.1.0),
+    ggplot2 (>= 3.5.0),
+    openxlsx (>= 4.2.0),
+    OrgMassSpecR (>= 0.5-3),
+    sinib (>= 1.0.0),
     stats,
-    stringr
+    stringr(>= 1.5.1)
 Depends: 
     R (>= 3.5)
