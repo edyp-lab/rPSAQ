@@ -93,7 +93,7 @@ deconvolute_peptides_abundances = function(ms2_data) {
   data_ms2 = data_ms2 %>% arrange(seq, desc(.data$i0_intensity))
 
   # Generate the theoretical isotopic distribution of fragments when the selection window targets the second isotope
-  theory = compute_all_fragments_distributions(sequences, fragment_type = c("y"))
+  theory = compute_all_fragments_distributions(sequences, fragment_type = c("y", "b"))
 
   # Join by peptide sequence and fragment mz
   merge_ms2 = dplyr::left_join(data_ms2, theory, by = c("seq" = "precursor_seq", "frag_label" = "fragment_label"))
@@ -174,7 +174,7 @@ batch_psaq_analysis = function(dir, xlsx_files_pattern) {
 
 #' Plot PSAQ Experimental Ratios
 #'
-#' Create a scatter plot to visualize experimental PSAQ (Protein Standard Absolute Quantification) ratios
+#' Creates a scatter plot to visualize experimental PSAQ (Protein Standard Absolute Quantification) ratios
 #' from deconvoluted peptide abundance data.
 #'
 #' @param psaq_deconvolution A data frame containing deconvoluted peptide abundance data.

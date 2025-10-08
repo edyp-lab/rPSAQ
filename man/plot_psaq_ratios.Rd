@@ -24,7 +24,7 @@ A ggplot object displaying experimental PSAQ ratios. The plot includes:
         The y-axis is limited to the range [-0.5, 2.5].
 }
 \description{
-Create a scatter plot to visualize experimental PSAQ (Protein Standard Absolute Quantification) ratios
+Creates a scatter plot to visualize experimental PSAQ (Protein Standard Absolute Quantification) ratios
 from deconvoluted peptide abundance data.
 }
 \details{
