@@ -20,14 +20,14 @@ A data frame with two columns:
         }
 }
 \description{
-This function computes the theoretical isotopic distribution of a peptide sequence,
-including the relative abundance of isotopologues (molecules with different isotopic compositions).
+This function computes the theoretical isotopic distribution of a precursor from its amino acids sequence.
+ The distribution represents the relative abundance of isotopologues (molecules with different isotopic compositions)
+ by taking into account the natural abundance  of heavy isotopes (^13C, ^2H, ^15N, ^18O, and ^33S).
 It is useful for predicting isotope patterns in mass spectrometry.
 }
 \details{
 The function uses the \code{\link[OrgMassSpecR]{ConvertPeptide}} function to convert the peptide sequence
 into its elemental composition, and the \code{\link[sinib]{dsinib}} function to compute the isotopic distribution.
-The natural abundance of heavy isotopes (^13C, ^2H, ^15N, ^18O, and ^33S) is taken into account.
 }
 \examples{
 # Example usage

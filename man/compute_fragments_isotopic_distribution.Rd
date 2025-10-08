@@ -37,7 +37,7 @@ This function performs the following steps:
 1. Generates the specified fragments (y and/or b ions) using the `generate_peptide_fragments` function.
 2. Computes the isotopic distribution of the precursor peptide using the `isotopic_distribution` function.
 3. Calculates the MS1 isotopic ratio (M+1/M) and adds it to the fragment data.
-4. For each fragment, computes the MS2 isotopic distribution using the `compute_ms2_isotopic_distribution` function.
+4. For each fragment, computes the MS2 isotopic distribution using the `ms2_isotopic_distribution` function.
 5. Calculates the MS2 isotopic ratio (M+1/M) for each fragment and appends it to the fragment data.
 
 The isotopic ratio is defined as the ratio of the probability of the first isotopologue (M+1) to the monoisotopic peak (M).
@@ -53,5 +53,5 @@ compute_fragments_isotopic_distribution("ALQASALAAWGGK", c("b"))
 \seealso{
 \code{\link{generate_peptide_fragments}} for generating peptide fragments.
 \code{\link{isotopic_distribution}} for computing the isotopic distribution of a peptide.
-\code{\link{compute_ms2_isotopic_distribution}} for computing the isotopic distribution of MS2 fragments.
+\code{\link{ms2_isotopic_distribution}} for computing the isotopic distribution of MS2 fragments.
 }

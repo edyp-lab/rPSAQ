@@ -1,7 +1,8 @@
 #' Calculate the theoretical isotopic distribution of a peptide
 #'
-#' This function computes the theoretical isotopic distribution of a peptide sequence,
-#' including the relative abundance of isotopologues (molecules with different isotopic compositions).
+#' This function computes the theoretical isotopic distribution of a precursor from its amino acids sequence.
+#'  The distribution represents the relative abundance of isotopologues (molecules with different isotopic compositions)
+#'  by taking into account the natural abundance  of heavy isotopes (^13C, ^2H, ^15N, ^18O, and ^33S).
 #' It is useful for predicting isotope patterns in mass spectrometry.
 #'
 #' @param sequence A character string representing the amino acid sequence of the peptide (e.g., "ALQASALAAWGGK").
@@ -17,7 +18,6 @@
 #' @details
 #' The function uses the \code{\link[OrgMassSpecR]{ConvertPeptide}} function to convert the peptide sequence
 #' into its elemental composition, and the \code{\link[sinib]{dsinib}} function to compute the isotopic distribution.
-#' The natural abundance of heavy isotopes (^13C, ^2H, ^15N, ^18O, and ^33S) is taken into account.
 #'
 #' @examples
 #' # Example usage
@@ -158,9 +158,9 @@ return(fragments)
 
 }
 
-#' Compute the Isotopic Distribution of an MS2 Fragment
+#' Compute the Isotopic Distribution of an Fragment
 #'
-#' Compute the isotopic distribution of the specified MS2 fragment, taking into account that only
+#' Compute the isotopic distribution of the specified fragment, taking into account that only
 #' the second isotope of the precursor have been included in the selection window.
 #' This function uses a hypergeometric distribution to model the contribution of precursor isotopes
 #' to the fragment isotopic distribution.
@@ -195,9 +195,9 @@ return(fragments)
 #'
 #' @examples
 #' # Compute the isotopic distribution for a fragment of the precursor peptide
-#' compute_ms2_isotopic_distribution("LAAWGGK", "ALQASALAAWGGK", 4)
-#' compute_ms2_isotopic_distribution("WGGK", "ALQASALAAWGGK", 4)
-#' compute_ms2_isotopic_distribution("ALQASALAAWGGK", "ALQASALAAWGGK", 4)
+#' ms2_isotopic_distribution("LAAWGGK", "ALQASALAAWGGK", 4)
+#' ms2_isotopic_distribution("WGGK", "ALQASALAAWGGK", 4)
+#' ms2_isotopic_distribution("ALQASALAAWGGK", "ALQASALAAWGGK", 4)
 #'
 #' @importFrom OrgMassSpecR ConvertPeptide
 #' @importFrom stats dhyper
@@ -207,7 +207,7 @@ return(fragments)
 #'
 #' @export
 #'
-compute_ms2_isotopic_distribution = function(fragment_seq, precursor_seq, size) {
+ms2_isotopic_distribution = function(fragment_seq, precursor_seq, size) {
 
   fragment_formula = OrgMassSpecR::ConvertPeptide(fragment_seq, output = "elements", IAA = FALSE)
   precursor_formula = OrgMassSpecR::ConvertPeptide(precursor_seq, output = "elements", IAA = FALSE)
@@ -247,7 +247,7 @@ compute_ms2_isotopic_distribution = function(fragment_seq, precursor_seq, size) 
 #' 1. Generates the specified fragments (y and/or b ions) using the `generate_peptide_fragments` function.
 #' 2. Computes the isotopic distribution of the precursor peptide using the `isotopic_distribution` function.
 #' 3. Calculates the MS1 isotopic ratio (M+1/M) and adds it to the fragment data.
-#' 4. For each fragment, computes the MS2 isotopic distribution using the `compute_ms2_isotopic_distribution` function.
+#' 4. For each fragment, computes the MS2 isotopic distribution using the `ms2_isotopic_distribution` function.
 #' 5. Calculates the MS2 isotopic ratio (M+1/M) for each fragment and appends it to the fragment data.
 #'
 #' The isotopic ratio is defined as the ratio of the probability of the first isotopologue (M+1) to the monoisotopic peak (M).
@@ -262,7 +262,7 @@ compute_ms2_isotopic_distribution = function(fragment_seq, precursor_seq, size) 
 #' @seealso
 #' \code{\link{generate_peptide_fragments}} for generating peptide fragments.
 #' \code{\link{isotopic_distribution}} for computing the isotopic distribution of a peptide.
-#' \code{\link{compute_ms2_isotopic_distribution}} for computing the isotopic distribution of MS2 fragments.
+#' \code{\link{ms2_isotopic_distribution}} for computing the isotopic distribution of MS2 fragments.
 #'
 #'
 #' @export
@@ -275,7 +275,7 @@ compute_fragments_isotopic_distribution = function(sequence, fragment_type = c("
   fragments$ms1_isotopic_ratio = ms1_isotopic_dist$percent[2] / ms1_isotopic_dist$percent[1]
 
   for (i in 1 : nrow(fragments)) {
-    ms2_isotopic_dist = compute_ms2_isotopic_distribution(fragments[i,"fragment_seq"], sequence, 4)
+    ms2_isotopic_dist = ms2_isotopic_distribution(fragments[i,"fragment_seq"], sequence, 4)
     ms2_isotopic_ratio = ms2_isotopic_dist$proba[2] / ms2_isotopic_dist$proba[1]
 
     added = rbind(added, data.frame(ms2_isotopic_ratio))
