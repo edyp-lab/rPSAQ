@@ -37,7 +37,6 @@
 #'   \item{mz}{Precursor m/z.}
 #'   \item{frag_mz}{Fragment m/z.}
 #'   \item{rt}{Retention time.}
-#'   \item{m/z}{m/z value.}
 #'   \item{frag_isotope}{Isotope label ("first" or "second").}
 #'   \item{frag_label}{Fragment label (e.g., "y3").}
 #'   \item{intensity}{One or more columns with "intensity" in their names.}
@@ -54,43 +53,16 @@
 #'
 #' @seealso
 #' \code{\link{compute_all_fragments_distributions}} for generating theoretical fragment distributions.
+#' \code{\link{reshape_data}} for reshaping abundance.
 #'
 #' @export
 #'
 deconvolute_peptides_abundances = function(ms2_data) {
 
-  required_columns = c("seq", "mz", "frag_mz", "rt", "m/z", "frag_isotope", "frag_label")
-
-  #
-  # Data check
-  #
-  intensity_column_idx = grep("intensity", names(ms2_data))
-  area_column_idx = grep("area", names(ms2_data))
-
-  data_check <- all(required_columns %in% names(ms2_data)) & length(intensity_column_idx) > 0 & length(area_column_idx) > 0
-
-  if (!data_check) {
-    print("The dataset must contain columns named (seq, mz, frag_mz, rt, m/z, frag_isotope, frag_label) and two columns suffixed by intensity and area")
-    return()
-  }
-
   # Extract sequences
   sequences = unique(ms2_data$seq)
 
-  # Extract isotope 1 abundances and rename columns
-  data_second_isotope = ms2_data %>% filter(tolower(.data$frag_isotope) == "second" ) %>% mutate(seq = stringr::str_split(.data$seq, " ", simplify = TRUE)[ ,1])
-  data_second_isotope = data_second_isotope %>% rename(i1_frag_mz = .data$frag_mz)
-  colnames(data_second_isotope)[intensity_column_idx] =  "i1_intensity"
-  colnames(data_second_isotope)[area_column_idx] = "i1_area"
-
-  # Extract isotope 0 abundances, rename columns and concatenate columns with initial data
-  data_first_isotope = ms2_data %>% filter(tolower(.data$frag_isotope) == "first") %>% mutate(seq = stringr::str_split(.data$seq, " ", simplify = TRUE)[ ,1])
-  data_first_isotope = data_first_isotope %>% rename(i0_frag_mz = .data$frag_mz)
-  colnames(data_first_isotope)[intensity_column_idx] =  "i0_intensity"
-  colnames(data_first_isotope)[area_column_idx] = "i0_area"
-
-  data_ms2 = dplyr::full_join(data_first_isotope, data_second_isotope, by = c("seq", "frag_label"), suffix = c("_i0", "_i1"))
-  data_ms2 = data_ms2 %>% arrange(seq, desc(.data$i0_intensity))
+  data_ms2 = reshape_data(ms2_data)
 
   # Generate the theoretical isotopic distribution of fragments when the selection window targets the second isotope
   theory = compute_all_fragments_distributions(sequences, fragment_type = c("y", "b"))
@@ -118,6 +90,107 @@ deconvolute_peptides_abundances = function(ms2_data) {
 }
 
 
+
+#' Reshape MS2 Abundance Data
+#'
+#' Reshape MS2 data by separating first and second isotope measurements and renaming columns
+#' for downstream analysis.
+#'
+#' @param ms2_data A data frame containing MS2 isotopic data with the following required columns:
+#'        \describe{
+#'          \item{seq}{Peptide sequence (may contain additional information separated by spaces).}
+#'          \item{mz}{Precursor m/z value.}
+#'          \item{frag_mz}{Fragment m/z value.}
+#'          \item{rt}{Retention time.}
+#'          \item{frag_isotope}{Isotope label, must contain values "first" or "second" (case-insensitive).}
+#'          \item{frag_label}{Fragment label (e.g., "y3", "b5").}
+#'        }
+#'        Additionally, the data frame must contain at least one column with "intensity" in its name
+#'        and at least one column with "area" in its name.
+#'
+#' @return A data frame with reshaped isotopic data containing:
+#'         \describe{
+#'           \item{seq}{Cleaned peptide sequence (first part before space if present).}
+#'           \item{mz}{Precursor m/z value.}
+#'           \item{i0_frag_mz}{Fragment m/z for first isotope measurements.}
+#'           \item{i1_frag_mz}{Fragment m/z for second isotope measurements.}
+#'           \item{i0_intensity}{Intensity for first isotope measurements.}
+#'           \item{i1_intensity}{Intensity for second isotope measurements.}
+#'           \item{i0_area}{Area for first isotope measurements.}
+#'           \item{i1_area}{Area for second isotope measurements.}
+#'           \item{frag_label}{Fragment label.}
+#'           \item{rt}{Retention time.}
+#'         }
+#'         The returned data frame is sorted by peptide sequence and descending first isotope intensity.
+#'         If input data doesn't meet requirements, the function returns NULL and prints an error message.
+#'
+#' @details
+#' This function performs the following operations:
+#' 1. Validates that the input data contains all required columns
+#' 2. Extracts and processes first isotope measurements (frag_isotope = "first")
+#' 3. Extracts and processes second isotope measurements (frag_isotope = "second")
+#' 4. Cleans peptide sequences by taking the first part before any space
+#' 5. Renames columns to indicate isotope origin (i0_ for first isotope, i1_ for second isotope)
+#' 6. Joins first and second isotope data by peptide sequence and fragment label
+#' 7. Sorts the resulting data frame by peptide sequence and descending first isotope intensity
+#'
+#' @examples
+#' # Example data frame with required columns
+#' data <- data.frame(
+#'   seq = c("PEPTIDE1 first", "PEPTIDE1 second", "PEPTIDE2 first", "PEPTIDE2 second"),
+#'   mz = c(500, 500, 600, 600),
+#'   frag_mz = c(200, 200.5, 300, 300.5),
+#'   rt = c(10, 10, 15, 15),
+#'   frag_isotope = c("first", "second", "first", "second"),
+#'   frag_label = c("y3", "y3", "y4", "y4"),
+#'   peptide_intensity = c(1000, 500, 1500, 750),
+#'   peptide_area = c(5000, 2500, 7500, 3750)
+#' )
+#'
+#' # Reshape the data
+#' reshaped_data <- reshape_data(data)
+#' head(reshaped_data)
+#'
+#' @importFrom dplyr filter mutate rename full_join arrange
+#' @importFrom stringr str_split
+#'
+#'
+#' @export
+#'
+reshape_data = function(ms2_data) {
+  required_columns = c("seq", "mz", "frag_mz", "rt", "frag_isotope", "frag_label")
+
+  #
+  # Data check
+  #
+  intensity_column_idx = grep("intensity", names(ms2_data))
+  area_column_idx = grep("area", names(ms2_data))
+
+  data_check <- all(required_columns %in% names(ms2_data)) & length(intensity_column_idx) > 0 & length(area_column_idx) > 0
+
+  if (!data_check) {
+    print("The dataset must contain columns named (seq, mz, frag_mz, rt, frag_isotope, frag_label) and two columns suffixed by intensity and area")
+    return()
+  }
+
+
+  # Extract isotope 1 abundances and rename columns
+  data_second_isotope = ms2_data %>% filter(tolower(.data$frag_isotope) == "second" ) %>% mutate(seq = stringr::str_split(.data$seq, " ", simplify = TRUE)[ ,1])
+  data_second_isotope = data_second_isotope %>% rename(i1_frag_mz = .data$frag_mz)
+  colnames(data_second_isotope)[intensity_column_idx] =  "i1_intensity"
+  colnames(data_second_isotope)[area_column_idx] = "i1_area"
+
+  # Extract isotope 0 abundances, rename columns and concatenate columns with initial data
+  data_first_isotope = ms2_data %>% filter(tolower(.data$frag_isotope) == "first") %>% mutate(seq = stringr::str_split(.data$seq, " ", simplify = TRUE)[ ,1])
+  data_first_isotope = data_first_isotope %>% rename(i0_frag_mz = .data$frag_mz)
+  colnames(data_first_isotope)[intensity_column_idx] =  "i0_intensity"
+  colnames(data_first_isotope)[area_column_idx] = "i0_area"
+
+  data_ms2 = dplyr::full_join(data_first_isotope, data_second_isotope, by = c("seq", "frag_label"), suffix = c("_i0", "_i1"))
+  data_ms2 = data_ms2 %>% arrange(seq, desc(.data$i0_intensity))
+
+  return(data_ms2)
+}
 
 #' Perform Batch PSAQ Analysis on Multiple Excel Files
 #'
@@ -184,13 +257,10 @@ batch_psaq_analysis = function(dir, xlsx_files_pattern) {
 #'                             \item{experimental_ratio_intensity}{Experimental ratio of PSAQ to endogenous based on intensity abundances.}
 #'                             \item{seq}{Peptide sequence for coloring points by sequence.}
 #'                           }
+#' @param base Plot intensity or area based ratios. Possible values are "intensity" or "area".
 #'
-#' @return A ggplot object displaying experimental PSAQ ratios. The plot includes:
-#'         \describe{
-#'           \item{Circular points}{Representing experimental_ratio_area values.}
-#'           \item{X-shaped points}{Representing experimental_ratio_intensity values (if present).}
-#'         }
-#'         The y-axis is limited to the range [-0.5, 2.5].
+#' @return A ggplot object displaying experimental PSAQ ratios. The plot includess the median experimental ratio
+#' represented as an horizontal line. The y-axis is limited to the range [-0.5, 2.5].
 #'
 #' @details
 #' This function creates a scatter plot where:
@@ -198,18 +268,17 @@ batch_psaq_analysis = function(dir, xlsx_files_pattern) {
 #'   \item The x-axis represents the row indices of the input data frame.
 #'   \item The y-axis represents the experimental ratio values.
 #'   \item Points are colored by peptide sequence.
-#'   \item Circular points represent experimental_ratio_area values.
-#'   \item X-shaped points represent experimental_ratio_intensity values (if this column exists in the data).
 #'   \item The y-axis is constrained between -0.5 and 2.5 to focus on relevant ratio values.
 #' }
 #'
 #' @examples
 #' # Deconvolute then plot PSAQ example data
 #' psaq_data = deconvolute_peptides_abundances(sample_10ng_r4)
-#' plot = plot_psaq_ratios(psaq_data)
+#' plot_psaq_ratios(psaq_data, "area")
 #'
 #'
-#' @importFrom ggplot2 ggplot geom_point ylim aes labs
+#' @importFrom ggplot2 ggplot geom_point ylim aes labs geom_segment annotate
+#' @importFrom stats median
 #'
 #' @seealso
 #' \code{\link{deconvolute_peptides_abundances}} for generating the input data.
@@ -218,10 +287,27 @@ batch_psaq_analysis = function(dir, xlsx_files_pattern) {
 #'
 #' @export
 #'
-plot_psaq_ratios = function(psaq_deconvolution) {
-  plot = ggplot(psaq_deconvolution) +
-    geom_point(aes(x = as.numeric(row.names(psaq_deconvolution)), y = .data$experimental_ratio_intensity, color = seq), shape = 4) +
-    geom_point(aes(x = as.numeric(row.names(psaq_deconvolution)), y = .data$experimental_ratio_area, color = seq)) +
-    ylim(-0.5, 2.5) + labs(x = "peptides/fragments", y = "ratio PSAQ/endo")
+plot_psaq_ratios = function(psaq_deconvolution, base = "area") {
+  if (tolower(base) == "area") {
+    med = median(psaq_deconvolution$experimental_ratio_area, na.rm = T)
+    sd = sd(psaq_deconvolution$experimental_ratio_area, na.rm = T)
+    plot = ggplot(psaq_deconvolution) +
+      geom_point(aes(x = as.numeric(row.names(psaq_deconvolution)), y = .data$experimental_ratio_area, color = seq)) +
+      ylim(-0.5, 2.5) + labs(x = "peptides/fragments", y = "ratio PSAQ/endo (area)") +
+      geom_segment(x = 0, y = med, xend = nrow(psaq_deconvolution)+1, yend = med) +
+      annotate("text", x=0, y=2.5, label= paste0("median ratio = ", round(med,3)), size = 3.5, hjust = 0) +
+      annotate("text", x=0, y=2.4, label= paste0("std devation = ", round(sd,4)), size = 3.5, hjust = 0)
+  } else{
+    med = median(psaq_deconvolution$experimental_ratio_intensity, na.rm = T)
+    sd = sd(psaq_deconvolution$experimental_ratio_intensity, na.rm = T)
+    plot = ggplot(psaq_deconvolution) +
+      geom_point(aes(x = as.numeric(row.names(psaq_deconvolution)), y = .data$experimental_ratio_intensity, color = seq)) +
+      ylim(-0.5, 2.5) + labs(x = "peptides/fragments", y = "ratio PSAQ/endo (intensity)") +
+      geom_segment(x = 0, y = med, xend = nrow(psaq_deconvolution)+1, yend = med) +
+      annotate("text", x=0, y=2.5, label= paste0("median ratio = ", round(med,3)), size = 3.5, hjust = 0) +
+      annotate("text", x=0, y=2.4, label= paste0("std devation = ", round(sd,4)), size = 3.5, hjust = 0)
+
+  }
+
   return(plot)
 }

@@ -44,7 +44,6 @@ The input data frame must contain the following columns:
   \item{mz}{Precursor m/z.}
   \item{frag_mz}{Fragment m/z.}
   \item{rt}{Retention time.}
-  \item{m/z}{m/z value.}
   \item{frag_isotope}{Isotope label ("first" or "second").}
   \item{frag_label}{Fragment label (e.g., "y3").}
   \item{intensity}{One or more columns with "intensity" in their names.}
@@ -58,4 +57,5 @@ data = deconvolute_peptides_abundances(sample_10ng_r4)
 }
 \seealso{
 \code{\link{compute_all_fragments_distributions}} for generating theoretical fragment distributions.
+\code{\link{reshape_data}} for reshaping abundance.
 }

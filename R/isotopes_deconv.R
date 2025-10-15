@@ -1,8 +1,80 @@
+
+
+#' The Atoms Natural Light and Heavy Isotopes
+#'
+#' @returns a named list of isotopic distribution of light and heavy (light+1) isotopes
+#' @export
+#'
+isotopes_abundances = function() {
+  return(list(C = c(0.9893, 0.0107), H = c(0.999885, 0.000115), N = c(0.996360, 0.003640), O = c(0.997570, 0.000380), S = c(0.9499, 0.0075)))
+}
+
+#' Calculate Isotope Probabilities Using Binomial Distribution
+#'
+#' Calculate the probabilities of observing different numbers of heavy isotopes in a molecule
+#' using the probabilities distribution.
+#'
+#' @param x A vector of integers representing the number of heavy isotopes (k) to calculate probabilities for.
+#'         Typically a sequence from 0 to the maximum number of heavy isotopes of interest.
+#' @param n An integer representing the total number of atoms that can have heavy isotopes
+#'         (e.g., number of carbon atoms in a molecule when calculating ^13C probabilities).
+#' @param prob A numeric vector of length 2 containing:
+#'        \describe{
+#'          \item{prob[1]}{Probability of the light isotope (e.g., probability of ^12C).}
+#'          \item{prob[2]}{Probability of the heavy isotope (e.g., probability of ^13C).}
+#'        }
+#'
+#'
+#' @return A numeric vector of probabilities corresponding to each value in x, calculated using the binomial formula:
+#'         P(X = k) = C(n, k) * p^k * (q)^(n-k), where p is the probability of the heavy isotope and q the probability
+#'         of the light isotope.
+#'
+#' @details
+#' This function calculates isotope probabilities using the binomial probability mass function:
+#' P(X = k) = C(n, k) * p^k * (q)^(n-k)
+#' where:
+#' \describe{
+#'   \item{C(n, k)}{Binomial coefficient "n choose k"}
+#'   \item{p}{prob[2], probability of the heavy isotope}
+#'   \item{q}{prob[1], probability of the light isotope}
+#'   \item{n}{Total number of atoms}
+#'   \item{k}{Number of heavy isotopes (values in x)}
+#' }
+#'
+#' The function is particularly useful for modeling isotopic distributions in mass spectrometry,
+#' where it can predict the relative abundances of different isotopologues.
+#'
+#' @examples
+#' # Calculate probabilities for 0 to 3 ^13C atoms in a molecule with 10 carbon atoms
+#' # Natural abundance of ^13C is ~1.07%
+#' x <- 0:3
+#' n <- 10
+#' prob <- c(0.9893, 0.0107)  # Probabilities for ^12C and ^13C
+#' isotopes_probabilities(x, n, prob)
+#'
+#' # Calculate probabilities for 0 to 5 ^15N atoms in a molecule with 20 nitrogen atoms
+#' # Natural abundance of ^15N is ~0.364%
+#' x <- 0:5
+#' n <- 20
+#' prob <- c(0.99636, 0.00364)  # Probabilities for ^14N and ^15N
+#' isotopes_probabilities(x, n, prob)
+#'
+#' @seealso
+#' \code{\link{choose}} for calculating binomial coefficients.
+#'
+#'
+#' @export
+#'
+isotopes_probabilities = function(x, n, prob) {
+  probabilities = sapply(x, function(k) { choose(n, k)*prob[2]^k*prob[1]^(n-k) })
+  return (probabilities)
+}
+
 #' Calculate the theoretical isotopic distribution of a peptide
 #'
 #' This function computes the theoretical isotopic distribution of a precursor from its amino acids sequence.
 #'  The distribution represents the relative abundance of isotopologues (molecules with different isotopic compositions)
-#'  by taking into account the natural abundance  of heavy isotopes (^13C, ^2H, ^15N, ^18O, and ^33S).
+#'  by taking into account the natural abundance  of heavy isotopes (^13C, ^2H, ^15N, ^17O, and ^33S).
 #' It is useful for predicting isotope patterns in mass spectrometry.
 #'
 #' @param sequence A character string representing the amino acid sequence of the peptide (e.g., "ALQASALAAWGGK").
@@ -22,6 +94,8 @@
 #' @examples
 #' # Example usage
 #' isotopic_distribution("ALQASALAAWGGK", size = 4)
+#' isotopic_distribution("GILAADESVGTMGNR", size = 4)
+#' isotopic_distribution("LSFSYGR", size = 4)
 #'
 #' @importFrom OrgMassSpecR ConvertPeptide
 #' @importFrom sinib dsinib
@@ -37,14 +111,75 @@ isotopic_distribution = function(sequence, size = 4) {
 
   proba_isotop = c(0.0107, 0.000184, 0.00364, 0.000380781, 0.007948959) # occurrence of the second isotope of each atom
 
-  formula = OrgMassSpecR::ConvertPeptide(sequence, output = "elements", IAA = FALSE)
+  formula = OrgMassSpecR::ConvertPeptide(sequence, output = "elements", IAA =  FALSE)
   n_espece = c(formula$C, formula$H, formula$N, formula$O, formula$S)
-  isotopes = c(0:size-1)
+  isotopes = c(0:(size-1))
   proba = sinib::dsinib(isotopes, size = n_espece, prob = proba_isotop)
   dist = data.frame(proba)
   dist = dist %>% mutate(percent = 100*proba/proba[1])
 
   return(dist)
+
+}
+
+#' Calculate the theoretical isotopic distribution of the first two isotopes of a peptide
+#'
+#' This function computes the theoretical isotopic distribution of a precursor from its amino acids sequence.
+#'  The distribution represents the relative abundance of isotopologues (molecules with different isotopic compositions)
+#'  by taking into account the natural abundance of +1 isotopes (^13C, ^2H, ^15N, ^17O, and ^33S).
+#'
+#' @param sequence A character string representing the amino acid sequence of the peptide (e.g., "ALQASALAAWGGK").
+#'
+#' @return A data frame with two columns:
+#'         \describe{
+#'           \item{proba}{Raw probabilities of each isotopologue.}
+#'         }
+#'
+#' @details
+#' The function uses the \code{\link[OrgMassSpecR]{ConvertPeptide}} function to convert the peptide sequence
+#' into its elemental composition, and the \code{\link[sinib]{dsinib}} function to compute the isotopic distribution.
+#'
+#' @examples
+#' # Example usage
+#' isotopic_distribution_v2("ALQASALAAWGGK")
+#' isotopic_distribution_v2("GILAADESVGTMGNR")
+#' isotopic_distribution_v2("LSFSYGR")
+#'
+#' @importFrom OrgMassSpecR ConvertPeptide
+#' @import dplyr
+#'
+#' @seealso
+#' \code{\link[OrgMassSpecR]{ConvertPeptide}} for converting peptide sequences to elemental compositions.
+#'
+#' @export
+#'
+isotopic_distribution_v2 = function(sequence) {
+
+  proba_isotopes = isotopes_abundances()
+  atoms= names(proba_isotopes)
+
+  formula = OrgMassSpecR::ConvertPeptide(sequence, output = "elements", IAA = FALSE)
+  formula[["H"]] = formula[["H"]] + 2 #doubly charged ion
+  d = list()
+
+  for (a in atoms) {
+    if (formula[[a]] > 0) {
+#      d[[a]] = dbinom(c(0:1), formula[[a]], proba_isotop[[a]])
+      d[[a]] = isotopes_probabilities(c(0:1), formula[[a]], proba_isotopes[[a]])
+    }
+  }
+
+  dist = data.frame(matrix(unlist(d), nrow=length(d), byrow=TRUE))
+
+  i1 = prod(dist$X1)
+  i2 = 0
+  for (i in 1:length(atoms)) {
+    if (formula[[i]] > 0) {
+      i2 = i2+dist[i,2]*prod(dist[-i, 1], na.rm = TRUE)
+    }
+  }
+
+  return(data.frame(proba = c(i1, i2)))
 
 }
 
@@ -196,8 +331,9 @@ return(fragments)
 #' @examples
 #' # Compute the isotopic distribution for a fragment of the precursor peptide
 #' ms2_isotopic_distribution("LAAWGGK", "ALQASALAAWGGK", 4)
-#' ms2_isotopic_distribution("WGGK", "ALQASALAAWGGK", 4)
-#' ms2_isotopic_distribution("ALQASALAAWGGK", "ALQASALAAWGGK", 4)
+#' ms2_isotopic_distribution("WGGK", "ALQASALAAWGGK")
+#' ms2_isotopic_distribution("ALQASALAAWGGK", "ALQASALAAWGGK")
+#' ms2_isotopic_distribution("SYGR", "LSFSYGR")
 #'
 #' @importFrom OrgMassSpecR ConvertPeptide
 #' @importFrom stats dhyper
@@ -207,7 +343,7 @@ return(fragments)
 #'
 #' @export
 #'
-ms2_isotopic_distribution = function(fragment_seq, precursor_seq, size) {
+ms2_isotopic_distribution = function(fragment_seq, precursor_seq, size = 4) {
 
   fragment_formula = OrgMassSpecR::ConvertPeptide(fragment_seq, output = "elements", IAA = FALSE)
   precursor_formula = OrgMassSpecR::ConvertPeptide(precursor_seq, output = "elements", IAA = FALSE)
@@ -217,6 +353,72 @@ ms2_isotopic_distribution = function(fragment_seq, precursor_seq, size) {
   return(isotopes)
 
 }
+
+
+#' Compute the Isotopic Distribution of the first two isotopes of a Fragment
+#'
+#' Compute the isotopic distribution of the specified fragment, taking into account that only
+#' the second isotope of the precursor have been included in the selection window.
+#'
+#' @param fragment_seq A character string representing the amino acid sequence of the fragment.
+#' @param precursor_seq A character string representing the amino acid sequence of the precursor peptide.
+#'
+#' @return A data frame with the following columns:
+#'         \describe{
+#'           \item{proba}{A numeric vector containing the probability associated with each MS2 isotope.}
+#'         }
+#'         The probabilities of each isotope is based on the number of heavy atoms included in the fragment.
+#'
+#'
+#' @examples
+#' # Compute the isotopic distribution for a fragment of the precursor peptide
+#' ms2_isotopic_distribution_v2("LAAWGGK", "ALQASALAAWGGK")
+#' ms2_isotopic_distribution_v2("WGGK", "ALQASALAAWGGK")
+#' ms2_isotopic_distribution_v2("ALQASALAAWGGK", "ALQASALAAWGGK")
+#' ms2_isotopic_distribution_v2("SYGR", "LSFSYGR")
+#'
+#' @importFrom OrgMassSpecR ConvertPeptide
+#'
+#' @seealso
+#' \code{\link[OrgMassSpecR]{ConvertPeptide}} for converting peptide sequences to elemental compositions.
+#'
+#' @export
+#'
+ms2_isotopic_distribution_v2 = function(fragment_seq, precursor_seq) {
+
+  fragment_formula = OrgMassSpecR::ConvertPeptide(fragment_seq, output = "elements", IAA = FALSE)
+  precursor_formula = OrgMassSpecR::ConvertPeptide(precursor_seq, output = "elements", IAA = FALSE)
+  precursor_formula[["H"]] = precursor_formula[["H"]] + 2 # doubly charged precursor ion
+  fragment_formula[["H"]] = fragment_formula[["H"]] + 1 # singly charged fragment ion
+
+  proba_isotopes = isotopes_abundances()
+  atoms= names(proba_isotopes)
+  p = list()
+  d = list()
+  for (a in atoms) {
+    if (precursor_formula[[a]] > 0) {
+      # d[[a]] = dbinom(1, precursor_formula[[a]], proba_isotopes[[a]])
+      # p[[a]] =  dhyper(c(0,1), 1, precursor_formula[[a]]-1, fragment_formula[[a]])
+      d[[a]] = isotopes_probabilities(1, precursor_formula[[a]], proba_isotopes[[a]])
+      p[[a]] =  c(1-(fragment_formula[[a]]/precursor_formula[[a]]), (fragment_formula[[a]]/precursor_formula[[a]]))
+    }
+  }
+
+  d = as.list(unlist(d)/sum(unlist(d)))
+  h1 = 0
+  h2 = 0
+  for (a in atoms) {
+    if (precursor_formula[[a]] > 0) {
+      h1 = h1 + d[[a]]*p[[a]][1]
+      h2 = h2 + d[[a]]*p[[a]][2]
+    }
+  }
+
+  isotopes = data.frame(proba = c(h1, h2))
+  return(isotopes)
+
+}
+
 
 #' Compute the Isotopic Distribution of MS2 Fragments of a Precursor
 #'
@@ -271,14 +473,18 @@ compute_fragments_isotopic_distribution = function(sequence, fragment_type = c("
 
   added = NULL
   fragments = generate_peptide_fragments(sequence, fragment_type = fragment_type)
-  ms1_isotopic_dist = isotopic_distribution(sequence)
-  fragments$ms1_isotopic_ratio = ms1_isotopic_dist$percent[2] / ms1_isotopic_dist$percent[1]
 
-  for (i in 1 : nrow(fragments)) {
-    ms2_isotopic_dist = ms2_isotopic_distribution(fragments[i,"fragment_seq"], sequence, 4)
+  ms1_isotopic_dist = isotopic_distribution_v2(sequence)
+  fragments$ms1_isotopic_ratio = ms1_isotopic_dist$proba[2] / ms1_isotopic_dist$proba[1]
+  fragments$ms1_isotopic_norm_ratio = ms1_isotopic_dist$proba[2] / (ms1_isotopic_dist$proba[1]+ms1_isotopic_dist$proba[2])
+
+    for (i in 1 : nrow(fragments)) {
+
+    ms2_isotopic_dist = ms2_isotopic_distribution_v2(fragments[i,"fragment_seq"], sequence)
     ms2_isotopic_ratio = ms2_isotopic_dist$proba[2] / ms2_isotopic_dist$proba[1]
+    ms2_isotopic_norm_ratio = ms2_isotopic_dist$proba[2] / (ms2_isotopic_dist$proba[1] + ms2_isotopic_dist$proba[2])
 
-    added = rbind(added, data.frame(ms2_isotopic_ratio))
+    added = rbind(added, data.frame(ms2_isotopic_ratio, ms2_isotopic_norm_ratio))
   }
 
   fragments = cbind(fragments, added)

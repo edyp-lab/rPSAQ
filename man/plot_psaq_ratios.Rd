@@ -4,7 +4,7 @@
 \alias{plot_psaq_ratios}
 \title{Plot PSAQ Experimental Ratios}
 \usage{
-plot_psaq_ratios(psaq_deconvolution)
+plot_psaq_ratios(psaq_deconvolution, base = "area")
 }
 \arguments{
 \item{psaq_deconvolution}{A data frame containing deconvoluted peptide abundance data.
@@ -14,14 +14,12 @@ This data frame should include the following columns:
   \item{experimental_ratio_intensity}{Experimental ratio of PSAQ to endogenous based on intensity abundances.}
   \item{seq}{Peptide sequence for coloring points by sequence.}
 }}
+
+\item{base}{Plot intensity or area based ratios. Possible values are "intensity" or "area".}
 }
 \value{
-A ggplot object displaying experimental PSAQ ratios. The plot includes:
-        \describe{
-          \item{Circular points}{Representing experimental_ratio_area values.}
-          \item{X-shaped points}{Representing experimental_ratio_intensity values (if present).}
-        }
-        The y-axis is limited to the range [-0.5, 2.5].
+A ggplot object displaying experimental PSAQ ratios. The plot includess the median experimental ratio
+represented as an horizontal line. The y-axis is limited to the range [-0.5, 2.5].
 }
 \description{
 Creates a scatter plot to visualize experimental PSAQ (Protein Standard Absolute Quantification) ratios
@@ -33,15 +31,13 @@ This function creates a scatter plot where:
   \item The x-axis represents the row indices of the input data frame.
   \item The y-axis represents the experimental ratio values.
   \item Points are colored by peptide sequence.
-  \item Circular points represent experimental_ratio_area values.
-  \item X-shaped points represent experimental_ratio_intensity values (if this column exists in the data).
   \item The y-axis is constrained between -0.5 and 2.5 to focus on relevant ratio values.
 }
 }
 \examples{
 # Deconvolute then plot PSAQ example data
 psaq_data = deconvolute_peptides_abundances(sample_10ng_r4)
-plot = plot_psaq_ratios(psaq_data)
+plot_psaq_ratios(psaq_data, "area")
 
 
 }

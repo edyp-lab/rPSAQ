@@ -4,7 +4,7 @@
 \alias{ms2_isotopic_distribution}
 \title{Compute the Isotopic Distribution of an Fragment}
 \usage{
-ms2_isotopic_distribution(fragment_seq, precursor_seq, size)
+ms2_isotopic_distribution(fragment_seq, precursor_seq, size = 4)
 }
 \arguments{
 \item{fragment_seq}{A character string representing the amino acid sequence of the fragment.}
@@ -47,8 +47,9 @@ In this context:
 \examples{
 # Compute the isotopic distribution for a fragment of the precursor peptide
 ms2_isotopic_distribution("LAAWGGK", "ALQASALAAWGGK", 4)
-ms2_isotopic_distribution("WGGK", "ALQASALAAWGGK", 4)
-ms2_isotopic_distribution("ALQASALAAWGGK", "ALQASALAAWGGK", 4)
+ms2_isotopic_distribution("WGGK", "ALQASALAAWGGK")
+ms2_isotopic_distribution("ALQASALAAWGGK", "ALQASALAAWGGK")
+ms2_isotopic_distribution("SYGR", "LSFSYGR")
 
 }
 \seealso{
