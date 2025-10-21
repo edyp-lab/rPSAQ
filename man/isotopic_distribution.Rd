@@ -2,28 +2,23 @@
 % Please edit documentation in R/isotopes_deconv.R
 \name{isotopic_distribution}
 \alias{isotopic_distribution}
-\title{Calculate the theoretical isotopic distribution of a peptide}
+\title{Calculate the theoretical isotopic distribution of the first two isotopes of a peptide}
 \usage{
-isotopic_distribution(sequence, size = 4)
+isotopic_distribution(sequence)
 }
 \arguments{
 \item{sequence}{A character string representing the amino acid sequence of the peptide (e.g., "ALQASALAAWGGK").}
-
-\item{size}{An integer specifying the number of isotopologues to compute (default = 4).
-This corresponds to the number of isotope peaks to model, starting from the monoisotopic peak.}
 }
 \value{
 A data frame with two columns:
         \describe{
           \item{proba}{Raw probabilities of each isotopologue.}
-          \item{percent}{Relative abundance of each isotopologue as a percentage of the monoisotopic peak.}
         }
 }
 \description{
 This function computes the theoretical isotopic distribution of a precursor from its amino acids sequence.
  The distribution represents the relative abundance of isotopologues (molecules with different isotopic compositions)
- by taking into account the natural abundance  of heavy isotopes (^13C, ^2H, ^15N, ^17O, and ^33S).
-It is useful for predicting isotope patterns in mass spectrometry.
+ by taking into account the natural abundance of +1 isotopes (^13C, ^2H, ^15N, ^17O, and ^33S).
 }
 \details{
 The function uses the \code{\link[OrgMassSpecR]{ConvertPeptide}} function to convert the peptide sequence
@@ -31,12 +26,11 @@ into its elemental composition, and the \code{\link[sinib]{dsinib}} function to 
 }
 \examples{
 # Example usage
-isotopic_distribution("ALQASALAAWGGK", size = 4)
-isotopic_distribution("GILAADESVGTMGNR", size = 4)
-isotopic_distribution("LSFSYGR", size = 4)
+isotopic_distribution("ALQASALAAWGGK")
+isotopic_distribution("GILAADESVGTMGNR")
+isotopic_distribution("LSFSYGR")
 
 }
 \seealso{
 \code{\link[OrgMassSpecR]{ConvertPeptide}} for converting peptide sequences to elemental compositions.
-\code{\link[sinib]{dsinib}} for computing isotopic distributions.
 }

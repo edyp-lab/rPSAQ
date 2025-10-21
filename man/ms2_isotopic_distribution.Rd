@@ -2,51 +2,29 @@
 % Please edit documentation in R/isotopes_deconv.R
 \name{ms2_isotopic_distribution}
 \alias{ms2_isotopic_distribution}
-\title{Compute the Isotopic Distribution of an Fragment}
+\title{Compute the Isotopic Distribution of the first two isotopes of a Fragment}
 \usage{
-ms2_isotopic_distribution(fragment_seq, precursor_seq, size = 4)
+ms2_isotopic_distribution(fragment_seq, precursor_seq)
 }
 \arguments{
 \item{fragment_seq}{A character string representing the amino acid sequence of the fragment.}
 
 \item{precursor_seq}{A character string representing the amino acid sequence of the precursor peptide.}
-
-\item{size}{An integer specifying the number of isotopes to consider.}
 }
 \value{
 A data frame with the following columns:
         \describe{
           \item{proba}{A numeric vector containing the probability associated with each MS2 isotope.}
         }
-        The probabilities are computed using a hypergeometric distribution, where the probability
-        of each isotope is based on the number of carbon-13 atoms included in the fragment.
+        The probabilities of each isotope is based on the number of heavy atoms included in the fragment.
 }
 \description{
 Compute the isotopic distribution of the specified fragment, taking into account that only
 the second isotope of the precursor have been included in the selection window.
-This function uses a hypergeometric distribution to model the contribution of precursor isotopes
-to the fragment isotopic distribution.
-}
-\details{
-The function uses a hypergeometric distribution to model the contribution of precursor isotopes
-to the fragment isotopic distribution. The hypergeometric distribution is defined as follows:
-\deqn{dhyper(x, m, n, k)}
-where:
-\describe{
-  \item{x}{Number of "white balls" drawn (number of carbon-13 atoms in the fragment isotope).}
-  \item{m}{Number of "white balls" in the urn (1, representing the carbon-13 atoms in the precursor).}
-  \item{n}{Number of "black balls" in the urn (number of carbon-12 atoms in the precursor minus 1).}
-  \item{k}{Number of balls drawn from the urn (number of carbon atoms in the fragment).}
-}
-In this context:
-\describe{
-  \item{White balls}{Number of carbon-13 atoms (MS1 isotope rank).}
-  \item{Black balls}{Number of carbon-12 atoms (total carbon in the precursor minus the isotope rank).}
-}
 }
 \examples{
 # Compute the isotopic distribution for a fragment of the precursor peptide
-ms2_isotopic_distribution("LAAWGGK", "ALQASALAAWGGK", 4)
+ms2_isotopic_distribution("LAAWGGK", "ALQASALAAWGGK")
 ms2_isotopic_distribution("WGGK", "ALQASALAAWGGK")
 ms2_isotopic_distribution("ALQASALAAWGGK", "ALQASALAAWGGK")
 ms2_isotopic_distribution("SYGR", "LSFSYGR")

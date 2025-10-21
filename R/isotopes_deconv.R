@@ -70,57 +70,6 @@ isotopes_probabilities = function(x, n, prob) {
   return (probabilities)
 }
 
-#' Calculate the theoretical isotopic distribution of a peptide
-#'
-#' This function computes the theoretical isotopic distribution of a precursor from its amino acids sequence.
-#'  The distribution represents the relative abundance of isotopologues (molecules with different isotopic compositions)
-#'  by taking into account the natural abundance  of heavy isotopes (^13C, ^2H, ^15N, ^17O, and ^33S).
-#' It is useful for predicting isotope patterns in mass spectrometry.
-#'
-#' @param sequence A character string representing the amino acid sequence of the peptide (e.g., "ALQASALAAWGGK").
-#' @param size An integer specifying the number of isotopologues to compute (default = 4).
-#'             This corresponds to the number of isotope peaks to model, starting from the monoisotopic peak.
-#'
-#' @return A data frame with two columns:
-#'         \describe{
-#'           \item{proba}{Raw probabilities of each isotopologue.}
-#'           \item{percent}{Relative abundance of each isotopologue as a percentage of the monoisotopic peak.}
-#'         }
-#'
-#' @details
-#' The function uses the \code{\link[OrgMassSpecR]{ConvertPeptide}} function to convert the peptide sequence
-#' into its elemental composition, and the \code{\link[sinib]{dsinib}} function to compute the isotopic distribution.
-#'
-#' @examples
-#' # Example usage
-#' isotopic_distribution("ALQASALAAWGGK", size = 4)
-#' isotopic_distribution("GILAADESVGTMGNR", size = 4)
-#' isotopic_distribution("LSFSYGR", size = 4)
-#'
-#' @importFrom OrgMassSpecR ConvertPeptide
-#' @importFrom sinib dsinib
-#' @import dplyr
-#'
-#' @seealso
-#' \code{\link[OrgMassSpecR]{ConvertPeptide}} for converting peptide sequences to elemental compositions.
-#' \code{\link[sinib]{dsinib}} for computing isotopic distributions.
-#'
-#' @export
-#'
-isotopic_distribution = function(sequence, size = 4) {
-
-  proba_isotop = c(0.0107, 0.000184, 0.00364, 0.000380781, 0.007948959) # occurrence of the second isotope of each atom
-
-  formula = OrgMassSpecR::ConvertPeptide(sequence, output = "elements", IAA =  FALSE)
-  n_espece = c(formula$C, formula$H, formula$N, formula$O, formula$S)
-  isotopes = c(0:(size-1))
-  proba = sinib::dsinib(isotopes, size = n_espece, prob = proba_isotop)
-  dist = data.frame(proba)
-  dist = dist %>% mutate(percent = 100*proba/proba[1])
-
-  return(dist)
-
-}
 
 #' Calculate the theoretical isotopic distribution of the first two isotopes of a peptide
 #'
@@ -141,9 +90,9 @@ isotopic_distribution = function(sequence, size = 4) {
 #'
 #' @examples
 #' # Example usage
-#' isotopic_distribution_v2("ALQASALAAWGGK")
-#' isotopic_distribution_v2("GILAADESVGTMGNR")
-#' isotopic_distribution_v2("LSFSYGR")
+#' isotopic_distribution("ALQASALAAWGGK")
+#' isotopic_distribution("GILAADESVGTMGNR")
+#' isotopic_distribution("LSFSYGR")
 #'
 #' @importFrom OrgMassSpecR ConvertPeptide
 #' @import dplyr
@@ -153,7 +102,7 @@ isotopic_distribution = function(sequence, size = 4) {
 #'
 #' @export
 #'
-isotopic_distribution_v2 = function(sequence) {
+isotopic_distribution = function(sequence) {
 
   proba_isotopes = isotopes_abundances()
   atoms= names(proba_isotopes)
@@ -293,68 +242,6 @@ return(fragments)
 
 }
 
-#' Compute the Isotopic Distribution of an Fragment
-#'
-#' Compute the isotopic distribution of the specified fragment, taking into account that only
-#' the second isotope of the precursor have been included in the selection window.
-#' This function uses a hypergeometric distribution to model the contribution of precursor isotopes
-#' to the fragment isotopic distribution.
-#'
-#' @param fragment_seq A character string representing the amino acid sequence of the fragment.
-#' @param precursor_seq A character string representing the amino acid sequence of the precursor peptide.
-#' @param size An integer specifying the number of isotopes to consider.
-#'
-#' @return A data frame with the following columns:
-#'         \describe{
-#'           \item{proba}{A numeric vector containing the probability associated with each MS2 isotope.}
-#'         }
-#'         The probabilities are computed using a hypergeometric distribution, where the probability
-#'         of each isotope is based on the number of carbon-13 atoms included in the fragment.
-#'
-#' @details
-#' The function uses a hypergeometric distribution to model the contribution of precursor isotopes
-#' to the fragment isotopic distribution. The hypergeometric distribution is defined as follows:
-#' \deqn{dhyper(x, m, n, k)}
-#' where:
-#' \describe{
-#'   \item{x}{Number of "white balls" drawn (number of carbon-13 atoms in the fragment isotope).}
-#'   \item{m}{Number of "white balls" in the urn (1, representing the carbon-13 atoms in the precursor).}
-#'   \item{n}{Number of "black balls" in the urn (number of carbon-12 atoms in the precursor minus 1).}
-#'   \item{k}{Number of balls drawn from the urn (number of carbon atoms in the fragment).}
-#' }
-#' In this context:
-#' \describe{
-#'   \item{White balls}{Number of carbon-13 atoms (MS1 isotope rank).}
-#'   \item{Black balls}{Number of carbon-12 atoms (total carbon in the precursor minus the isotope rank).}
-#' }
-#'
-#' @examples
-#' # Compute the isotopic distribution for a fragment of the precursor peptide
-#' ms2_isotopic_distribution("LAAWGGK", "ALQASALAAWGGK", 4)
-#' ms2_isotopic_distribution("WGGK", "ALQASALAAWGGK")
-#' ms2_isotopic_distribution("ALQASALAAWGGK", "ALQASALAAWGGK")
-#' ms2_isotopic_distribution("SYGR", "LSFSYGR")
-#'
-#' @importFrom OrgMassSpecR ConvertPeptide
-#' @importFrom stats dhyper
-#'
-#' @seealso
-#' \code{\link[OrgMassSpecR]{ConvertPeptide}} for converting peptide sequences to elemental compositions.
-#'
-#' @export
-#'
-ms2_isotopic_distribution = function(fragment_seq, precursor_seq, size = 4) {
-
-  fragment_formula = OrgMassSpecR::ConvertPeptide(fragment_seq, output = "elements", IAA = FALSE)
-  precursor_formula = OrgMassSpecR::ConvertPeptide(precursor_seq, output = "elements", IAA = FALSE)
-  indexes = c(1:size)
-  h = dhyper((indexes-1), 1, precursor_formula$C-1, fragment_formula$C)
-  isotopes = data.frame(proba = h)
-  return(isotopes)
-
-}
-
-
 #' Compute the Isotopic Distribution of the first two isotopes of a Fragment
 #'
 #' Compute the isotopic distribution of the specified fragment, taking into account that only
@@ -372,10 +259,10 @@ ms2_isotopic_distribution = function(fragment_seq, precursor_seq, size = 4) {
 #'
 #' @examples
 #' # Compute the isotopic distribution for a fragment of the precursor peptide
-#' ms2_isotopic_distribution_v2("LAAWGGK", "ALQASALAAWGGK")
-#' ms2_isotopic_distribution_v2("WGGK", "ALQASALAAWGGK")
-#' ms2_isotopic_distribution_v2("ALQASALAAWGGK", "ALQASALAAWGGK")
-#' ms2_isotopic_distribution_v2("SYGR", "LSFSYGR")
+#' ms2_isotopic_distribution("LAAWGGK", "ALQASALAAWGGK")
+#' ms2_isotopic_distribution("WGGK", "ALQASALAAWGGK")
+#' ms2_isotopic_distribution("ALQASALAAWGGK", "ALQASALAAWGGK")
+#' ms2_isotopic_distribution("SYGR", "LSFSYGR")
 #'
 #' @importFrom OrgMassSpecR ConvertPeptide
 #'
@@ -384,7 +271,7 @@ ms2_isotopic_distribution = function(fragment_seq, precursor_seq, size = 4) {
 #'
 #' @export
 #'
-ms2_isotopic_distribution_v2 = function(fragment_seq, precursor_seq) {
+ms2_isotopic_distribution = function(fragment_seq, precursor_seq) {
 
   fragment_formula = OrgMassSpecR::ConvertPeptide(fragment_seq, output = "elements", IAA = FALSE)
   precursor_formula = OrgMassSpecR::ConvertPeptide(precursor_seq, output = "elements", IAA = FALSE)
@@ -474,13 +361,13 @@ compute_fragments_isotopic_distribution = function(sequence, fragment_type = c("
   added = NULL
   fragments = generate_peptide_fragments(sequence, fragment_type = fragment_type)
 
-  ms1_isotopic_dist = isotopic_distribution_v2(sequence)
+  ms1_isotopic_dist = isotopic_distribution(sequence)
   fragments$ms1_isotopic_ratio = ms1_isotopic_dist$proba[2] / ms1_isotopic_dist$proba[1]
   fragments$ms1_isotopic_norm_ratio = ms1_isotopic_dist$proba[2] / (ms1_isotopic_dist$proba[1]+ms1_isotopic_dist$proba[2])
 
     for (i in 1 : nrow(fragments)) {
 
-    ms2_isotopic_dist = ms2_isotopic_distribution_v2(fragments[i,"fragment_seq"], sequence)
+    ms2_isotopic_dist = ms2_isotopic_distribution(fragments[i,"fragment_seq"], sequence)
     ms2_isotopic_ratio = ms2_isotopic_dist$proba[2] / ms2_isotopic_dist$proba[1]
     ms2_isotopic_norm_ratio = ms2_isotopic_dist$proba[2] / (ms2_isotopic_dist$proba[1] + ms2_isotopic_dist$proba[2])
 
