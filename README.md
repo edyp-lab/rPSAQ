@@ -19,13 +19,17 @@ The package provides a sample MS2 abundances dataset named
 
 ## Installation
 
-You can install the development version of rPSAQ from
+You can install the current version of rPSAQ from
 [GitHub](https://github.com/) with:
 
 ``` r
 # install.packages("pak")
 pak::pak("edyp-lab/rPSAQ")
 ```
+
+***Note:*** On Windows, to build the rPSAQ package on your system from
+source, RTools matching your R version is required
+(<https://cran.r-project.org/bin/windows/Rtools/>).
 
 ## Example
 
