@@ -132,6 +132,76 @@ isotopic_distribution = function(sequence) {
 
 }
 
+#' Compute the Isotopic Distribution of the first two isotopes of a Fragment
+#'
+#' Compute the isotopic distribution of the specified fragment, taking into account that only
+#' the second isotope of the precursor have been included in the selection window.
+#'
+#' @param fragment_seq A character string representing the amino acid sequence of the fragment.
+#' @param precursor_seq A character string representing the amino acid sequence of the precursor peptide.
+#'
+#' @return A data frame with the following columns:
+#'         \describe{
+#'           \item{proba}{A numeric vector containing the probability associated with each MS2 isotope.}
+#'         }
+#'         The probabilities of each isotope is based on the number of heavy atoms included in the fragment.
+#'
+#'
+#' @examples
+#' # Compute the isotopic distribution for a fragment of the precursor peptide
+#' ms2_isotopic_distribution("LAAWGGK", "ALQASALAAWGGK")
+#' ms2_isotopic_distribution("WGGK", "ALQASALAAWGGK")
+#' ms2_isotopic_distribution("ALQASALAAWGGK", "ALQASALAAWGGK")
+#' ms2_isotopic_distribution("SYGR", "LSFSYGR")
+#'
+#' @importFrom OrgMassSpecR ConvertPeptide
+#'
+#' @seealso
+#' \code{\link[OrgMassSpecR]{ConvertPeptide}} for converting peptide sequences to elemental compositions.
+#'
+#' @export
+#'
+ms2_isotopic_distribution = function(fragment_seq, precursor_seq) {
+
+  fragment_formula = OrgMassSpecR::ConvertPeptide(fragment_seq, output = "elements", IAA = FALSE)
+  precursor_formula = OrgMassSpecR::ConvertPeptide(precursor_seq, output = "elements", IAA = FALSE)
+  precursor_formula[["H"]] = precursor_formula[["H"]] + 2 # doubly charged precursor ion
+  fragment_formula[["H"]] = fragment_formula[["H"]] + 1 # singly charged fragment ion
+
+  proba_isotopes = isotopes_abundances()
+  atoms= names(proba_isotopes)
+  p = list()
+  d = list()
+  for (a in atoms) {
+    if (precursor_formula[[a]] > 0) {
+      d[[a]] = isotopes_probabilities(c(0:1), precursor_formula[[a]], proba_isotopes[[a]])
+      p[[a]] =  c(1-(fragment_formula[[a]]/precursor_formula[[a]]), (fragment_formula[[a]]/precursor_formula[[a]]))
+    }
+  }
+
+  dist = data.frame(matrix(unlist(d), nrow=length(d), byrow=TRUE))
+  d = list()
+  for (i in 1:length(atoms)) {
+    if (precursor_formula[[i]] > 0) {
+      d[[atoms[i]]] = dist[i,2]*prod(dist[-i, 1], na.rm = TRUE)
+    }
+  }
+
+  d = as.list(unlist(d)/sum(unlist(d)))
+
+  h1 = 0
+  h2 = 0
+  for (a in atoms) {
+    if (precursor_formula[[a]] > 0) {
+      h1 = h1 + d[[a]]*p[[a]][1]
+      h2 = h2 + d[[a]]*p[[a]][2]
+    }
+  }
+
+  isotopes = data.frame(proba = c(h1, h2))
+  return(isotopes)
+
+}
 
 #' Enumerate y and/or b fragments of a peptide
 #'
@@ -239,70 +309,6 @@ if (is.element("b", fragment_type)) {
   }
 }
 return(fragments)
-
-}
-
-#' Compute the Isotopic Distribution of the first two isotopes of a Fragment
-#'
-#' Compute the isotopic distribution of the specified fragment, taking into account that only
-#' the second isotope of the precursor have been included in the selection window.
-#'
-#' @param fragment_seq A character string representing the amino acid sequence of the fragment.
-#' @param precursor_seq A character string representing the amino acid sequence of the precursor peptide.
-#'
-#' @return A data frame with the following columns:
-#'         \describe{
-#'           \item{proba}{A numeric vector containing the probability associated with each MS2 isotope.}
-#'         }
-#'         The probabilities of each isotope is based on the number of heavy atoms included in the fragment.
-#'
-#'
-#' @examples
-#' # Compute the isotopic distribution for a fragment of the precursor peptide
-#' ms2_isotopic_distribution("LAAWGGK", "ALQASALAAWGGK")
-#' ms2_isotopic_distribution("WGGK", "ALQASALAAWGGK")
-#' ms2_isotopic_distribution("ALQASALAAWGGK", "ALQASALAAWGGK")
-#' ms2_isotopic_distribution("SYGR", "LSFSYGR")
-#'
-#' @importFrom OrgMassSpecR ConvertPeptide
-#'
-#' @seealso
-#' \code{\link[OrgMassSpecR]{ConvertPeptide}} for converting peptide sequences to elemental compositions.
-#'
-#' @export
-#'
-ms2_isotopic_distribution = function(fragment_seq, precursor_seq) {
-
-  fragment_formula = OrgMassSpecR::ConvertPeptide(fragment_seq, output = "elements", IAA = FALSE)
-  precursor_formula = OrgMassSpecR::ConvertPeptide(precursor_seq, output = "elements", IAA = FALSE)
-  precursor_formula[["H"]] = precursor_formula[["H"]] + 2 # doubly charged precursor ion
-  fragment_formula[["H"]] = fragment_formula[["H"]] + 1 # singly charged fragment ion
-
-  proba_isotopes = isotopes_abundances()
-  atoms= names(proba_isotopes)
-  p = list()
-  d = list()
-  for (a in atoms) {
-    if (precursor_formula[[a]] > 0) {
-      # d[[a]] = dbinom(1, precursor_formula[[a]], proba_isotopes[[a]])
-      # p[[a]] =  dhyper(c(0,1), 1, precursor_formula[[a]]-1, fragment_formula[[a]])
-      d[[a]] = isotopes_probabilities(1, precursor_formula[[a]], proba_isotopes[[a]])
-      p[[a]] =  c(1-(fragment_formula[[a]]/precursor_formula[[a]]), (fragment_formula[[a]]/precursor_formula[[a]]))
-    }
-  }
-
-  d = as.list(unlist(d)/sum(unlist(d)))
-  h1 = 0
-  h2 = 0
-  for (a in atoms) {
-    if (precursor_formula[[a]] > 0) {
-      h1 = h1 + d[[a]]*p[[a]][1]
-      h2 = h2 + d[[a]]*p[[a]][2]
-    }
-  }
-
-  isotopes = data.frame(proba = c(h1, h2))
-  return(isotopes)
 
 }
 
