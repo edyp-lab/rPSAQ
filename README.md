@@ -59,9 +59,9 @@ openxlsx::write.xlsx(deconvoluted_data, "outputfile.xlsx")
 
 The deconvolution can be batch performed from a list of Excel files
 stored in a folder. For example to perform deconvolution on all Excel
-files starting by “7843” and ending with “.xlsx” located in the
+files starting by “784” and ending with “.xlsx” located in the
 “inst/extdata” folder:
 
 ``` r
-batch_psaq_analysis("inst/extdata", "^7843.*\\.xlsx$")
+batch_psaq_analysis("inst/extdata", "^784.*\\.xlsx$")
 ```

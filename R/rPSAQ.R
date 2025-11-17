@@ -203,6 +203,9 @@ reshape_data = function(ms2_data) {
 #' @param xlsx_files_pattern A character string specifying the pattern to match Excel files.
 #'                           Example pattern : "^784.*\\\.xlsx$", which matches files starting with "784"
 #'                           and ending with ".xlsx". This pattern is passed to \code{\link{list.files}}.
+#' @param output_plot A boolean specifying if graphical representation must be generated. If TRUE
+#'                        two plot (one based on area abundances, one based on intensity abundances) will
+#'                        be generated for each input file
 #'
 #' @return This function does not return a value. Instead, it writes the results of the deconvolution
 #'         to new Excel files in the current working directory. Each output file is named
@@ -225,6 +228,9 @@ reshape_data = function(ms2_data) {
 #' batch_psaq_analysis("inst/extdata", "^sample.*\\.xlsx$")
 #'
 #' @importFrom openxlsx write.xlsx
+#' @importFrom ggplot2 labs
+#' @importFrom grDevices dev.off pdf
+#' @importFrom utils, read.table
 #'
 #' @seealso
 #' \code{\link{deconvolute_peptides_abundances}} for deconvoluting peptide abundances from a single Excel file.
@@ -232,14 +238,32 @@ reshape_data = function(ms2_data) {
 #'
 #' @export
 #'
-batch_psaq_analysis = function(dir, xlsx_files_pattern) {
+batch_psaq_analysis = function(dir, xlsx_files_pattern, output_plot = FALSE) {
   files <- list.files(dir, pattern = xlsx_files_pattern)
   print(paste0("Found ", length(files), " files matching pattern ",xlsx_files_pattern, " in ", dir))
+  if (output_plot) {
+    grDevices::pdf(file.path(dir, "plots.pdf"))
+  }
   for(filename in files) {
     print(paste0("Processing file : ", filename, " ..."))
     inputfile = file.path(dir, filename)
-    ms2_data = openxlsx::read.xlsx(inputfile, sheet = 1, colNames = TRUE)
+    if (endsWith(filename, "xlsx")) {
+      ms2_data = openxlsx::read.xlsx(inputfile, sheet = 1, colNames = TRUE)
+    } else if (endsWith(filename, "csv")) {
+      ms2_data = utils::read.table(file = inputfile, sep = ";", dec = ".", header = TRUE)
+    }
     psaq_deconvolution = deconvolute_peptides_abundances(ms2_data)
+    if (output_plot) {
+      plot_area = plot_psaq_ratios(psaq_deconvolution, "area")
+      plot_area = plot_area + labs(title = paste0(filename, " (Area) "))
+      print(plot_area)
+      plot_intensity = plot_psaq_ratios(psaq_deconvolution, "intensity")
+      plot_intensity = plot_intensity + labs(title = paste0(filename, " (Intensity) "))
+      print(plot_intensity)
+    }
+    if (output_plot) {
+      grDevices::dev.off()
+    }
     outputfile = file.path(dir, paste0("calculated_ratios_", filename))
     openxlsx::write.xlsx(psaq_deconvolution, outputfile)
   }
