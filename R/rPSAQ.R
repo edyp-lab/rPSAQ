@@ -261,12 +261,14 @@ batch_psaq_analysis = function(dir, xlsx_files_pattern, output_plot = FALSE) {
       plot_intensity = plot_intensity + labs(title = paste0(filename, " (Intensity) "))
       print(plot_intensity)
     }
-    if (output_plot) {
-      grDevices::dev.off()
-    }
     outputfile = file.path(dir, paste0("calculated_ratios_", filename))
     openxlsx::write.xlsx(psaq_deconvolution, outputfile)
   }
+
+  if (output_plot) {
+    grDevices::dev.off()
+  }
+
 }
 
 #' Plot PSAQ Experimental Ratios
